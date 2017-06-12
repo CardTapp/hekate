@@ -1,11 +1,7 @@
 module Hekate
   class Railtie < Rails::Railtie
-    rake_tasks do
-      load 'lib/tasks'
-    end
-
-    config.before_configuration do
-      Engine.load_environment
+    config.before_initialize do
+      Hekate::Engine.new(Engine.get_region, Rails.env.to_s, ENV['HEKATE_APPLICATION']).load_environment
     end
   end
 end

@@ -8,21 +8,11 @@ Gem::Specification.new do |spec|
   spec.name          = 'hekate'
   spec.version       = Hekate::VERSION
   spec.authors       = ['jasonrisch']
-  spec.email         = ['jason@cardtapp.com']
+  spec.email         = ['krimsonkla@yahoo.com']
 
-  spec.summary       = 'Write a short summary, because Rubygems requires one.'
-  spec.description   = 'Write a longer description or delete this line.'
-  spec.homepage      = 'http://www.cardtapp.com'
+  spec.summary       = 'A simple rails interface for hiding secrets in AWS EC2 Parameters'
+  spec.homepage      = 'https://github.com/krimsonkla/hekate'
   spec.license       = 'MIT'
-
-  # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
-  # to allow pushing to a single host or delete this section to allow pushing to any host.
-  if spec.respond_to?(:metadata)
-    spec.metadata['allowed_push_host'] = "TODO: Set to 'http://mygemserver.com'"
-  else
-    raise 'RubyGems 2.0 or newer is required to protect against ' \
-      'public gem pushes.'
-  end
 
   spec.files = `git ls-files -z`.split("\x0").reject do |f|
     f.match(%r{^(test|spec|features)/})
@@ -31,13 +21,15 @@ Gem::Specification.new do |spec|
   spec.executables   = ['hekate']
   spec.require_paths = ['lib']
 
-  spec.add_dependency 'ec2-metadata'
-  spec.add_dependency 'commander'
-  spec.add_dependency 'railties'
-  spec.add_dependency 'aws-sdk'
-  spec.add_dependency 'rails', '~> 4'
+  spec.add_runtime_dependency 'aws-sdk', '~> 2.9', '>= 2.9.0'
+  spec.add_runtime_dependency 'commander', '~> 4.4', '>= 4.4.0'
+  spec.add_runtime_dependency 'ec2-metadata', '~> 0.2', '>= 0.2.0'
+  spec.add_runtime_dependency 'railties', '~> 4.2', '>= 4.2.0'
+  spec.add_runtime_dependency 'rails', '~> 4'
+  spec.add_runtime_dependency 'dotenv', '~> 0'
 
-  spec.add_development_dependency 'bundler', '~> 1.14'
+  spec.add_development_dependency 'bundler', '~> 1.15'
   spec.add_development_dependency 'rake', '~> 10.0'
   spec.add_development_dependency 'rspec', '~> 3.0'
+  spec.add_development_dependency 'webmock', '~>3.0.0'
 end

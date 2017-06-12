@@ -1,8 +1,6 @@
 # Hekate
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/hekate`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+Hekate is a gem for encrypting, storing and consuming rails application secrets as Amazon SSM parameters
 
 ## Installation
 
@@ -19,16 +17,108 @@ And then execute:
 Or install it yourself as:
 
     $ gem install hekate
+    
+Add the following to application.rb
+    
+    require "hekate"
+    Hekate::Engine.application = "yourapplicationname"
+
+When included in a rails application Hekate will read application secrets directly from AWS SMS Parameter Store based on the RAILS_ENV, AWS_REGION environment variables and store them as ENV variables
+
+SSM parameters are loaded in much the same fashion as with the dotenv gem. Root items are loaded first, then overloaded with more specific settings.
+
+For example, when the following keys exist in the parameter store
+
+    myapp.root.SOMEKEY = basevalue
+    myapp.staging.SOMEKEY = stagingvalue
+    
+The resulting environment settings would be
+
+    ENV["SOMEKEY"] = stagingvalue
+    
 
 ## Usage
+### AWS Authentication
+Hekate requires AWS authentication in order to read or set parameters and assumes credentials are provided via one of the available amazon authentication methods. Please see amazon documentation for more details
 
-TODO: Write usage instructions here
+### AWS Security
+Note: this gem takes no responsibility for the security of your stored secrets/parameters. You will need to configure IAM security policies to provide read/write access to the kms encryption keys and parameters as necessary.
 
-## Development
+Below are some sample amazon iam security policies to get you started. These could be made more secure by restricting to specific resources rather than specifying a wild card.
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+Hekate User - read only parameter access for developers or servers
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "Stmt1497208350000",
+            "Effect": "Allow",
+            "Action": [
+                "ssm:DescribeParameters",
+                "ssm:GetParameters"
+            ],
+            "Resource": [
+                "*"
+            ]
+        },
+        {
+            "Sid": "Stmt1497208350001",
+            "Effect": "Allow",
+            "Action": "kms:Decrypt",
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+Hekate Admin -  read/write access for a parameter maintainer
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "Stmt1497208350000",
+            "Effect": "Allow",
+            "Action": [
+                "ssm:DescribeParameters",
+                "ssm:GetParameters",
+                "ssm:PutParameter"
+            ],
+            "Resource": [
+                "*"
+            ]
+        },
+        {
+            "Sid": "Stmt1497208350001",
+            "Effect": "Allow",
+            "Action": "kms:*",
+            "Resource": "*"
+        }
+    ]
+}
+```
+### Binary Commands
+Hekate provides a command line interface for reading and writing secrets to the parameter store. Note that it will automatically create an amazon kms key with the following naming convention as needed `application.environment`
+
+
+help - lists avalable commands. For help on a specific command issue `hekate command --help` or see documentation in the docs folder.
+
+put - adds one item to the parameter store
+
+get - reads one item from the parameter store
+
+delete - deletes on item from the parameter store
+
+delete_all - deletes all parameters for the given application and environment combination
+
+import - imports a .env formatted secrets file
+
+export - exports to a .env formatted secrets file
+
+### Working when offline
+In the event that you need to work offline hekate can fall back to using dotenv files. Offline mode is only available for development and test. Be sure to use `hekate export` to create the necessary files before going offline.
 
 ## Contributing
 
