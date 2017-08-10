@@ -34,14 +34,20 @@ module Hekate
         end
       end
 
+      def root
+        @root ||= Rails::Engine.find_root_with_flag('config.ru', File.dirname($PROGRAM_NAME))
+      end
+
       def dotenv_files
-        root = Rails::Engine.find_root_with_flag('config.ru', File.dirname($PROGRAM_NAME))
-        [
+        files = [
           root.join(".env.#{Rails.env}.local"),
           (root.join('.env.local') unless Rails.env.test?),
           root.join(".env.#{Rails.env}"),
           root.join('.env')
-        ].compact
+        ].compact.select { |file| File.exist? file }
+
+        raise 'Could not find .env files while falling back to dotenv' if files.empty?
+        files
       end
     end
 
@@ -75,7 +81,7 @@ module Hekate
       elsif Rails.env.development? || Rails.env.test?
         Dotenv.load(*Hekate::Engine.dotenv_files)
       else
-        Fail 'Could not find an internet connection or .env files'
+        raise 'Could not connect to parameter store'
       end
     end
 

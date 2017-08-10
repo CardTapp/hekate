@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'socket'
 
 RSpec.describe Hekate::Engine do
   describe 'get_region' do
@@ -20,15 +21,37 @@ RSpec.describe Hekate::Engine do
     end
   end
 
+  describe 'ec2?' do
+    it 'returns true if ec2 metadata present' do
+      expect(Ec2Metadata).to receive(:[]).with(:instance_id).and_return(true)
+      expect(Hekate::Engine.ec2?).to eq true
+    end
+
+    it 'returns false if ec2 metadata not present' do
+      expect(Ec2Metadata).to receive(:[]).with(:instance_id).and_raise(StandardError)
+      expect(Hekate::Engine.ec2?).to eq false
+    end
+  end
+
+  describe 'online?' do
+    it 'returns true if a connection can be made to aws' do
+      allow(TCPSocket).to receive(:new).and_return(double(close: ->() {}))
+      expect(Hekate::Engine.online?).to eq true
+    end
+
+    it 'returns false if a connection to aws throws' do
+      allow(TCPSocket).to receive(:new).and_raise(SocketError)
+      expect(Hekate::Engine.online?).to eq false
+    end
+  end
+
   describe 'load_environment' do
     describe 'online' do
       before(:each) do
         allow(Hekate::Engine).to receive(:online?).and_return(true)
       end
+
       it 'loads environment parameters' do
-        # AWS has
-        # myapp.development.ONE=valueone
-        # myapp.development.TWO=valuetwo
         expect_any_instance_of(Hekate::Aws).to receive(:list_parameters)
           .with('root')
           .and_return([])
@@ -48,10 +71,6 @@ RSpec.describe Hekate::Engine do
       end
 
       it 'requests root and environment specific keys' do
-        # AWS has two keys
-        # myapp.development.ONE=valueone
-        # myapp.development.TWO=valuetwo
-        # myapp.root.THREE=valuethree
         expect_any_instance_of(Hekate::Aws).to receive(:list_parameters)
           .with('root')
           .and_return([double(name: 'myapp.root.THREE')])
@@ -78,10 +97,6 @@ RSpec.describe Hekate::Engine do
       end
 
       it 'overwrites root keys' do
-        # AWS has three keys
-        # myapp.development.ONE=valueone
-        # myapp.development.TWO=valuetwo
-        # myapp.root.ONE=ROOT
         expect_any_instance_of(Hekate::Aws).to receive(:list_parameters)
           .with('root')
           .and_return([double(name: 'myapp.root.ONE')])
@@ -104,6 +119,49 @@ RSpec.describe Hekate::Engine do
         expect(ENV).to receive(:[]=).with('ONE', 'valueone')
         expect(ENV).to receive(:[]=).with('TWO', 'valuetwo')
         engine.load_environment
+      end
+
+      it 'falls back to dotenv when offline and in test environment' do
+        expect(Hekate::Engine).to receive(:online?).and_return(false)
+        engine = Hekate::Engine.new('us-east-1', 'test', 'myapp')
+        allow(Rails).to receive(:env).and_return(ActiveSupport::StringInquirer.new('test'))
+        expect(Dotenv).to receive(:load)
+        expect(Hekate::Engine).to receive(:dotenv_files).and_return([])
+        engine.load_environment
+      end
+
+      it 'falls back to dotenv when offline and in development environment' do
+        expect(Hekate::Engine).to receive(:online?).and_return(false)
+        engine = Hekate::Engine.new('us-east-1', 'development', 'myapp')
+        allow(Rails).to receive(:env).and_return(ActiveSupport::StringInquirer.new('development'))
+        expect(Dotenv).to receive(:load)
+        expect(Hekate::Engine).to receive(:dotenv_files).and_return([])
+        engine.load_environment
+      end
+
+      it 'throws when offline in development and no env files found' do
+        expect(Hekate::Engine).to receive(:online?).and_return(false)
+        engine = Hekate::Engine.new('us-east-1', 'development', 'myapp')
+        allow(Rails).to receive(:env).and_return(ActiveSupport::StringInquirer.new('development'))
+        allow(File).to receive(:exist?).and_return(false)
+        allow(Hekate::Engine).to receive(:root).and_return(Pathname.new('/'))
+        expect { engine.load_environment }.to raise_error
+      end
+
+      it 'throws when offline in test and no env files found' do
+        expect(Hekate::Engine).to receive(:online?).and_return(false)
+        engine = Hekate::Engine.new('us-east-1', 'test', 'myapp')
+        allow(Rails).to receive(:env).and_return(ActiveSupport::StringInquirer.new('test'))
+        allow(File).to receive(:exist?).and_return(false)
+        allow(Hekate::Engine).to receive(:root).and_return(Pathname.new('/'))
+        expect { engine.load_environment }.to raise_error('Could not find .env files while falling back to dotenv')
+      end
+
+      it 'does not fall back to dotenv when in anything but development or test' do
+        expect(Hekate::Engine).to receive(:online?).and_return(false)
+        engine = Hekate::Engine.new('us-east-1', 'production', 'myapp')
+        allow(Rails).to receive(:env).and_return(ActiveSupport::StringInquirer.new('production'))
+        expect { engine.load_environment }.to raise_error('Could not connect to parameter store')
       end
     end
   end
