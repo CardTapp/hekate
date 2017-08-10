@@ -6,15 +6,15 @@ require 'webmock/rspec'
 if ENV['CI'] == 'true'
   require 'simplecov'
   SimpleCov.filters.clear
-  SimpleCov.start do |file|
+  SimpleCov.start do |_file|
     add_filter do |file|
       !file.filename.start_with?('lib/') && !file.filename.start_with?('bin/')
     end
   end
   require 'codecov'
   SimpleCov.formatter = SimpleCov::Formatter::Codecov
-  Dir["lib/**/*.rb"].each {|file| puts file; puts load(file); }
-  Dir["bin/**/*.rb"].each {|file| puts file; puts load(file); }
+  Dir['lib/**/*.rb'].each { |file| puts file; puts load(file); }
+  Dir['bin/**/*.rb'].each { |file| puts file; puts load(file); }
 end
 
 RSpec.configure do |config|
@@ -28,7 +28,6 @@ RSpec.configure do |config|
   config.after(:suite) do
     # ensure commander doesn't attempt to run any left over commands from testing
     runner = Commander::Runner.instance
-    def runner.run_active_command
-    end
+    def runner.run_active_command; end
   end
 end
