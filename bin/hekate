@@ -132,7 +132,7 @@ command :get do |c|
     end
 
     engine = Hekate::Engine.new(options.region, options.environment, options.application)
-    puts engine.get(options.key)
+    engine.get(options.key)
   end
 end
 

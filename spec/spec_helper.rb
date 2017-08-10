@@ -13,8 +13,8 @@ if ENV['CI'] == 'true'
   end
   require 'codecov'
   SimpleCov.formatter = SimpleCov::Formatter::Codecov
-  Dir['lib/**/*.rb'].each { |file| puts file; puts load(file); }
-  Dir['bin/**/*.rb'].each { |file| puts file; puts load(file); }
+  Dir['lib/**/*.rb'].each { |file| load(file); }
+  Dir['bin/**/*.rb'].each { |file| load(file); }
 end
 
 RSpec.configure do |config|

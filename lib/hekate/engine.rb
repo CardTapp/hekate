@@ -54,7 +54,7 @@ module Hekate
     def initialize(region, environment, application = nil)
       @region = region || Hekate::Engine.get_region
       @environment = environment || Rails.env
-      Hekate::Engine.application = application
+      Hekate::Engine.application ||= application
     end
 
     def awsclient
