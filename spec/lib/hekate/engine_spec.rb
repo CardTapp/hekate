@@ -35,12 +35,12 @@ RSpec.describe Hekate::Engine do
 
   describe 'online?' do
     it 'returns true if a connection can be made to aws' do
-      allow(TCPSocket).to receive(:new).and_return(double(close: ->() {}))
+      # allow(TCPSocket).to receive(:new).and_return(double(close: ->() {}))
       expect(Hekate::Engine.online?).to eq true
     end
 
     it 'returns false if a connection to aws throws' do
-      allow(TCPSocket).to receive(:new).and_raise(SocketError)
+      allow_any_instance_of(Socket).to receive(:connect_nonblock).and_raise(SocketError)
       expect(Hekate::Engine.online?).to eq false
     end
   end

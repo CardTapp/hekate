@@ -21,7 +21,7 @@ Gem::Specification.new do |spec|
   spec.executables   = ['hekate']
   spec.require_paths = ['lib']
 
-  spec.add_runtime_dependency 'aws-sdk', '~> 2.9', '>= 2.9.0'
+  spec.add_runtime_dependency 'aws-sdk', '~> 2.9', '~> 2.9.0'
   spec.add_runtime_dependency 'commander', '~> 4.4', '>= 4.4.0'
   spec.add_runtime_dependency 'ec2-metadata', '~> 0.2', '>= 0.2.0'
   spec.add_runtime_dependency 'railties', '~> 4.2', '>= 4.2.0'
