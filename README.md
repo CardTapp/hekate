@@ -41,7 +41,7 @@ The resulting environment settings would be
 
     ENV["SOMEKEY"] = stagingvalue
     
-
+    
 ## Usage
 ### AWS Authentication
 Hekate requires AWS authentication in order to read or set parameters and assumes credentials are provided via one of the available amazon authentication methods. Please see amazon documentation for more details
@@ -103,6 +103,13 @@ Hekate Admin -  read/write access for a parameter maintainer
         }
     ]
 }
+
+### Environment Configuration
+Use the following environment settings to customize Hekate
+
+ENV["HAKATE_DISABLE"] = any value - Disable hekate and fall back to .env files
+ENV["HEKATE_SSM_TIMEOUT"] - float representing the the time to wait for a connection to SSM to be made. A timeout will result in hekate falling back to offline mode.
+
 ```
 ### Binary Commands
 Hekate provides a command line interface for reading and writing secrets to the parameter store. Note that it will automatically create an amazon kms key with the following naming convention as needed `application.environment`

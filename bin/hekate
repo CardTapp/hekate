@@ -24,10 +24,10 @@ class CommandProcessor
   end
 
   def self.valid?(options)
-    say("<%= color('--application is required', RED) %>!") unless options.application
-    say("<%= color('--environment is required', RED) %>!") unless options.environment
+    say("<%= color('--application is required', RED) %>!") if options.application.blank?
+    say("<%= color('--environment is required', RED) %>!") if options.environment.blank?
 
-    options.application && options.environment && yield
+    !options.application.blank? && !options.environment.blank? && yield
   end
 end
 
@@ -40,7 +40,7 @@ command :import do |c|
     CommandProcessor.add_default_values options
 
     next unless CommandProcessor.valid?(options) do
-      unless options.file && File.exist?(options.file)
+      if options.file.blank? || !File.exist?(options.file)
         say("<%= color('--file was not provided or does not exist', RED) %>!")
         next(false)
       end
@@ -49,6 +49,7 @@ command :import do |c|
         say("<%= color('ABORTED', RED) %>!")
         next(false)
       end
+      next(true)
     end
 
     engine = Hekate::Engine.new(options.region, options.environment, options.application)
@@ -66,10 +67,11 @@ command :put do |c|
     CommandProcessor.add_default_values options
 
     next unless CommandProcessor.valid?(options) do
-      unless options.key && options.value
+      if options.key.blank? || options.value.blank?
         say("<%= color('--key and --value are required', RED) %>!")
         next(false)
       end
+      next(true)
     end
 
     engine = Hekate::Engine.new(options.region, options.environment, options.application)
@@ -86,10 +88,11 @@ command :delete do |c|
     CommandProcessor.add_default_values options
 
     next unless CommandProcessor.valid?(options) do
-      unless options.key
+      if options.key.blank?
         say("<%= color('--key is required', RED) %>!")
         next(false)
       end
+      next(true)
     end
 
     engine = Hekate::Engine.new(options.region, options.environment, options.application)
@@ -109,6 +112,7 @@ command :delete_all do |c|
         say("<%= color('ABORTED', RED) %>!")
         next(false)
       end
+      next(true)
     end
 
     engine = Hekate::Engine.new(options.region, options.environment, options.application)
@@ -125,14 +129,15 @@ command :get do |c|
     CommandProcessor.add_default_values options
 
     next unless CommandProcessor.valid?(options) do
-      unless options.key
+      if options.key.blank?
         say("<%= color('--key is required', RED) %>!")
         next(false)
       end
+      next(true)
     end
 
     engine = Hekate::Engine.new(options.region, options.environment, options.application)
-    engine.get(options.key)
+    puts engine.get(options.key)
   end
 end
 
@@ -145,7 +150,7 @@ command :export do |c|
     CommandProcessor.add_default_values options
 
     next unless CommandProcessor.valid?(options) do
-      unless options.file
+      if options.file.blank?
         say("<%= color('--file is required', RED) %>!")
         next(false)
       end
@@ -155,6 +160,7 @@ command :export do |c|
           next(false)
         end
       end
+      next true
     end
     engine = Hekate::Engine.new(options.region, options.environment, options.application)
     engine.export options.file
