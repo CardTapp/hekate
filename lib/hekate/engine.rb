@@ -58,7 +58,7 @@ module Hekate
     end
 
     def awsclient
-      @awsclient ||= Hekate::Aws.new(@region)
+      @awsclient ||= Hekate::Aws.new(@region, @environment)
     end
 
     def load_environment
