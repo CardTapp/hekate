@@ -2,8 +2,9 @@ require 'aws-sdk'
 
 module Hekate
   class Aws
-    def initialize(region)
+    def initialize(region, environment)
       @region = region
+      @environment = environment
     end
 
     def get_parameter(name)
