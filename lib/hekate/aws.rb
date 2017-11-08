@@ -1,4 +1,5 @@
-require 'aws-sdk'
+require 'aws-sdk-ssm'
+require 'aws-sdk-kms'
 
 module Hekate
   class Aws
