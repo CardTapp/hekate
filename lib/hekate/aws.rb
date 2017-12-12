@@ -15,7 +15,7 @@ module Hekate
       ).parameters
 
       if parameters.to_a.empty?
-        fail "Could not find parameter #{parameter_key}"
+        fail "Could not find parameter #{name}"
       else
         parameters.first['value']
       end
