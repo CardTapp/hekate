@@ -1,42 +1,47 @@
-require 'aws-sdk-ssm'
-require 'aws-sdk-kms'
+# frozen_string_literal: true
+
+require "aws-sdk-ssm"
+require "aws-sdk-kms"
 
 module Hekate
   class Aws
-    def initialize(region, environment)
+    def initialize(region)
       @region = region
-      @environment = environment
     end
 
     def get_parameter(name)
       parameters = ssm.get_parameters(
-        names: [name],
-        with_decryption: true
+          names: [name],
+          with_decryption: true
       ).parameters
 
       if parameters.to_a.empty?
         fail "Could not find parameter #{name}"
       else
-        parameters.first['value']
+        parameters.first["value"]
       end
     end
 
-    def list_parameters(environment)
-      get_app_env_parameters(environment)
+    def list_parameters(environments = [])
+      get_app_env_parameters(environments)
     end
 
     def get_parameters(names)
-      ssm.get_parameters(
-        names: names,
-        with_decryption: true
-      ).parameters
+      result = []
+      names.each_slice(10) do |slice|
+        result.concat(ssm.get_parameters(
+            names: slice,
+            with_decryption: true
+        ).parameters)
+      end
+      result.flatten
     end
 
-    def put_parameter(name, value)
+    def put_parameter(name, value, environment)
       ssm.put_parameter(name: name,
                         value: value,
-                        type: 'SecureString',
-                        key_id: kms_key,
+                        type: "SecureString",
+                        key_id: kms_key(environment),
                         overwrite: true)
     end
 
@@ -54,22 +59,26 @@ module Hekate
       @ssm ||= ::Aws::SSM::Client.new(region: @region)
     end
 
-    def kms_key
-      return @kms_key if @kms_key
+    def kms_key(environment)
+      return @keys[environment].key_id if @keys[environment]
 
-      alias_name = "alias/#{Hekate::Engine.application}_#{@environment}"
+      alias_name = "alias/#{Hekate::Engine.application}_#{environment}"
 
       if kms_alias_exists? alias_name
         key = kms.describe_key(key_id: alias_name).key_metadata
       else
         key = kms.create_key.key_metadata
         kms.create_alias(
-          alias_name: alias_name,
-          target_key_id: key.key_id
+            alias_name: alias_name,
+            target_key_id: key.key_id
         )
       end
+      if key
+        @keys[environment] = key
+        return key.key_id
+      end
 
-      key.key_id
+      fail "Failed to create or retrieve kms key"
     end
 
     def kms_alias_exists?(kms_alias)
@@ -77,22 +86,22 @@ module Hekate
       aliases.include? kms_alias
     end
 
-    def get_app_env_parameters(env, parameters = [], next_token = nil)
+    def get_app_env_parameters(environments = [], parameters = [], next_token = nil)
       query = {
-        filters: [
-          {
-            key: 'Name',
-            values: ["#{Hekate::Engine.application}.#{env}"]
-          }
-        ],
-        max_results: 50
+          filters: [
+              {
+                  key: "Name",
+                  values: environments.map { |e| "#{Hekate::Engine.application}.#{e}" }
+              }
+          ],
+          max_results: 50
       }
       query[:next_token] = next_token if next_token
       response = ssm.describe_parameters(query)
 
       parameters += response.parameters
 
-      parameters = get_app_env_parameters(env, parameters, response.next_token) if response.next_token
+      parameters = get_app_env_parameters(environments, parameters, response.next_token) if response.next_token
 
       parameters
     end
