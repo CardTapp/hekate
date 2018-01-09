@@ -1,7 +1,9 @@
-require 'commander/user_interaction'
-require 'dotenv'
-require 'ec2_metadata'
-require 'open-uri'
+# frozen_string_literal: true
+
+require "commander/user_interaction"
+require "dotenv"
+require "ec2_metadata"
+require "open-uri"
 
 module Hekate
   class Engine
@@ -10,9 +12,9 @@ module Hekate
 
       def get_region
         if ec2?
-          Ec2Metadata[:placement]['availability-zone'][0...-1]
+          Ec2Metadata[:placement]["availability-zone"][0...-1]
         else
-          ENV['AWS_REGION'] || 'us-east-1'
+          ENV["AWS_REGION"] || "us-east-1"
         end
       end
 
@@ -24,38 +26,37 @@ module Hekate
       end
 
       def online?
-        require 'socket'
+        require "socket"
 
-        return false if ENV['HAKATE_DISABLE']
+        return false if ENV["HAKATE_DISABLE"]
 
-        timeout = ENV.fetch('HEKATE_SSM_TIMEOUT') { 0.5 }
+        timeout = ENV.fetch("HEKATE_SSM_TIMEOUT") { 0.5 }
         can_connect?(
-            'ssm.us-east-1.amazonaws.com',
+            "ssm.us-east-1.amazonaws.com",
             443,
             timeout
         )
       end
 
       def root
-        @root ||= Rails::Engine.find_root_with_flag('config.ru', File.dirname($PROGRAM_NAME))
+        @root ||= Rails::Engine.find_root_with_flag("config.ru", File.dirname($PROGRAM_NAME))
       end
 
       def dotenv_files
         files = [
-          root.join(".env.#{Rails.env}.local"),
-          (root.join('.env.local') unless Rails.env.test?),
-          root.join(".env.#{Rails.env}"),
-          root.join('.env')
+            root.join(".env.#{Rails.env}.local"),
+            (root.join(".env.local") unless Rails.env.test?),
+            root.join(".env.#{Rails.env}"),
+            root.join(".env")
         ].compact.select { |file| File.exist? file }
 
-        raise 'Could not find .env files while falling back to dotenv' if files.empty?
+        raise "Could not find .env files while falling back to dotenv" if files.empty?
         files
       end
 
       private
 
       def can_connect?(host, port, timeout = 2)
-
         # Convert the passed host into structures the non-blocking calls
         # can deal with
         addr = Socket.getaddrinfo(host, nil)
@@ -70,7 +71,6 @@ module Hekate
             # immediatelyit will raise an IO::WaitWritable (Errno::EINPROGRESS)
             # indicating the connection is in progress.
             socket.connect_nonblock(sockaddr)
-
           rescue IO::WaitWritable
             # IO.select will block until the socket is writable or the timeout
             # is exceeded - whichever comes first.
@@ -109,30 +109,29 @@ module Hekate
     end
 
     def awsclient
-      @awsclient ||= Hekate::Aws.new(@region, @environment)
+      @awsclient ||= Hekate::Aws.new(@region)
     end
 
     def load_environment
       if Hekate::Engine.online?
-        ['root', @environment].each do |env|
-          parameter_key = "#{Hekate::Engine.application}.#{env}."
+        application = "#{Hekate::Engine.application}."
+        environments = ["root", @environment].compact
 
-          parameters = awsclient.list_parameters(env)
-          parameters = parameters.map(&:name)
+        parameters = awsclient.list_parameters(environments)
+        parameters = parameters.map(&:name)
 
-          parameters.each_slice(10) do |slice|
-            result = awsclient.get_parameters(slice)
+        result = awsclient.get_parameters(parameters)
 
-            result.each do |parameter|
-              parameter_name = parameter.name.gsub(parameter_key, '')
-              ENV[parameter_name] = parameter.value
-            end
+        environments.each do |env|
+          result.select { |r| r.name[/#{Hekate::Engine.application}\.#{env}\./] }.each do |parameter|
+            parameter_name = parameter.name.gsub(application, "").gsub("#{env}.", "")
+            ENV[parameter_name] = parameter.value
           end
         end
       elsif Rails.env.development? || Rails.env.test?
         Dotenv.load(*Hekate::Engine.dotenv_files)
       else
-        raise 'Could not connect to parameter store'
+        raise "Could not connect to parameter store"
       end
     end
 
@@ -144,9 +143,9 @@ module Hekate
       progress = Commander::UI::ProgressBar.new(lines.length)
       lines.each do |line|
         progress.increment
-        next if line.start_with? '#'
+        next if line.start_with? "#"
 
-        key, value = line.split('=')
+        key, value = line.split("=")
 
         next if value.nil?
         value = value.delete('"').delete("'").delete("\n")
@@ -158,7 +157,7 @@ module Hekate
 
     def put(key, value)
       parameter_key = "#{Hekate::Engine.application}.#{@environment}.#{key}"
-      awsclient.put_parameter(parameter_key, value)
+      awsclient.put_parameter(parameter_key, value, @environment)
     end
 
     def get(key)
@@ -167,7 +166,7 @@ module Hekate
     end
 
     def delete_all
-      parameters = awsclient.list_parameters(@environment).map(&:name)
+      parameters = awsclient.list_parameters([@environment]).map(&:name)
       progress = Commander::UI::ProgressBar.new(parameters.length)
       parameters.each do |parameter|
         progress.increment
@@ -183,16 +182,16 @@ module Hekate
     def export(env_file)
       parameter_key = "#{Hekate::Engine.application}.#{@environment}."
 
-      parameters = awsclient.list_parameters(@environment).map(&:name)
+      parameters = awsclient.list_parameters([@environment]).map(&:name)
 
       progress = Commander::UI::ProgressBar.new(parameters.length)
-      open(env_file, 'w') do |file|
+      open(env_file, "w") do |file|
         parameters.each_slice(10) do |slice|
           result = awsclient.get_parameters(slice)
 
           result.each do |parameter|
             progress.increment
-            parameter_name = parameter.name.gsub(parameter_key, '')
+            parameter_name = parameter.name.gsub(parameter_key, "")
             file.puts "#{parameter_name}=#{parameter.value}"
           end
         end
