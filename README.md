@@ -1,10 +1,10 @@
 # [Hekate](http://www.ancient.eu/Hecate/)
 
 [![Gem Version](https://badge.fury.io/rb/hekate.svg)](https://badge.fury.io/rb/hekate)
-[![CircleCI](https://circleci.com/gh/krimsonkla/hekate.svg?style=svg)](https://circleci.com/gh/krimsonkla/hekate)
-[![codecov](https://codecov.io/gh/krimsonkla/hekate/branch/master/graph/badge.svg)](https://codecov.io/gh/krimsonkla/hekate)
-[![Dependency Status](https://gemnasium.com/badges/github.com/krimsonkla/hekate.svg)](https://gemnasium.com/github.com/krimsonkla/hekate)
-
+[![CircleCI](https://circleci.com/gh/CardTapp/hekate.svg?style=svg)](https://circleci.com/gh/CardTapp/hekate)
+[![codecov](https://codecov.io/gh/cardtapp/hekate/branch/master/graph/badge.svg)](https://codecov.io/gh/krimsonkla/hekate)
+[![Dependency Status](https://gemnasium.com/badges/github.com/CardTapp/hekate.svg)](https://gemnasium.com/github.com/CardTapp/hekate)
+[![Maintainability](https://api.codeclimate.com/v1/badges/1f576a8d9c31d00c3e3e/maintainability)](https://codeclimate.com/github/CardTapp/hekate/maintainability)
 Hekate is a gem for encrypting, storing and consuming rails application secrets as Amazon SSM parameters
 
 ## Installation
