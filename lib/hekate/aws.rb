@@ -7,6 +7,7 @@ module Hekate
   class Aws
     def initialize(region)
       @region = region
+      @keys = {}
     end
 
     def get_parameter(name)
