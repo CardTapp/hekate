@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require 'hekate'
+require_relative '../lib/hekate'
 require 'rubygems'
 require 'commander/import'
 

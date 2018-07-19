@@ -11,7 +11,7 @@ module Hekate
       attr_accessor :application
 
       def get_region
-        if ec2?
+        if !%w[development test].include?(Rails.env.to_s) && ec2?
           Ec2Metadata[:placement]["availability-zone"][0...-1]
         else
           ENV["AWS_REGION"] || "us-east-1"
@@ -21,7 +21,7 @@ module Hekate
       def ec2?
         Ec2Metadata[:instance_id]
         true
-      rescue
+      rescue StandardError
         false
       end
 
@@ -81,7 +81,7 @@ module Hekate
               rescue Errno::EISCONN
                 # Good news everybody, the socket is connected!
                 result = true
-              rescue
+              rescue StandardError
                 # An unexpected exception was raised - the connection is no good.
                 socket.close
                 result = false
@@ -93,7 +93,7 @@ module Hekate
               socket.close
               result = false
             end
-          rescue
+          rescue StandardError
             result = false
           end
         end
@@ -114,17 +114,14 @@ module Hekate
 
     def load_environment
       if Hekate::Engine.online?
-        application = "#{Hekate::Engine.application}."
+        application = Hekate::Engine.application
         environments = ["root", @environment].compact
 
-        parameters = awsclient.list_parameters(environments)
-        parameters = parameters.map(&:name)
-
-        result = awsclient.get_parameters(parameters)
+        parameters = awsclient.get_parameters(environments)
 
         environments.each do |env|
-          result.select { |r| r.name[/#{Hekate::Engine.application}\.#{env}\./] }.each do |parameter|
-            parameter_name = parameter.name.gsub(application, "").gsub("#{env}.", "")
+          parameters.select { |r| r.name.start_with?("/#{application}/#{env}/") }.each do |parameter|
+            parameter_name = parameter.name.gsub("/#{application}/#{env}/", "")
             ENV[parameter_name] = parameter.value
           end
         end
@@ -146,8 +143,8 @@ module Hekate
         next if line.start_with? "#"
 
         key, value = line.split("=")
-
         next if value.nil?
+
         value = value.delete('"').delete("'").delete("\n")
         next if value.empty?
 
@@ -156,17 +153,17 @@ module Hekate
     end
 
     def put(key, value)
-      parameter_key = "#{Hekate::Engine.application}.#{@environment}.#{key}"
+      parameter_key = "/#{Hekate::Engine.application}/#{@environment}/#{key}"
       awsclient.put_parameter(parameter_key, value, @environment)
     end
 
     def get(key)
-      parameter_key = "#{Hekate::Engine.application}.#{@environment}.#{key}"
+      parameter_key = "/#{Hekate::Engine.application}/#{@environment}/#{key}"
       awsclient.get_parameter(parameter_key)
     end
 
     def delete_all
-      parameters = awsclient.list_parameters([@environment]).map(&:name)
+      parameters = awsclient.get_parameters([@environment]).map(&:name)
       progress = Commander::UI::ProgressBar.new(parameters.length)
       parameters.each do |parameter|
         progress.increment
@@ -175,25 +172,19 @@ module Hekate
     end
 
     def delete(key)
-      parameter_key = "#{Hekate::Engine.application}.#{@environment}.#{key}"
+      parameter_key = "/#{Hekate::Engine.application}/#{@environment}/#{key}"
       awsclient.delete_parameter(parameter_key)
     end
 
     def export(env_file)
-      parameter_key = "#{Hekate::Engine.application}.#{@environment}."
-
-      parameters = awsclient.list_parameters([@environment]).map(&:name)
+      parameters = awsclient.get_parameters([@environment])
 
       progress = Commander::UI::ProgressBar.new(parameters.length)
       open(env_file, "w") do |file|
-        parameters.each_slice(10) do |slice|
-          result = awsclient.get_parameters(slice)
-
-          result.each do |parameter|
-            progress.increment
-            parameter_name = parameter.name.gsub(parameter_key, "")
-            file.puts "#{parameter_name}=#{parameter.value}"
-          end
+        parameters.each do |parameter|
+          progress.increment
+          parameter_name = parameter.name.gsub("/#{Hekate::Engine.application}/#{@environment}/", "")
+          file.puts "#{parameter_name}=#{parameter.value}"
         end
       end
     end
