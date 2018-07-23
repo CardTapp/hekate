@@ -1,7 +1,6 @@
-# coding: utf-8
 # frozen_string_literal: true
 
-lib = File.expand_path("../lib", __FILE__)
+lib = File.expand_path("lib", __dir__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require "hekate/version"
 
@@ -26,10 +25,10 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "aws-sdk-kms", "~>1.2.0", ">= 1.2.0"
   spec.add_runtime_dependency "aws-sdk-ssm", "~>1.3.0", ">= 1.3.0"
   spec.add_runtime_dependency "commander", "~> 4.4", ">= 4.4.0"
-  spec.add_runtime_dependency "ec2-metadata", "~> 0.2", ">= 0.2.0"
-  spec.add_runtime_dependency "railties", "~> 4.2", ">= 4.2.0"
-  spec.add_runtime_dependency "rails", "~> 4"
   spec.add_runtime_dependency "dotenv", "~> 2.2", ">= 2.2.1"
+  spec.add_runtime_dependency "ec2-metadata", "~> 0.2", ">= 0.2.0"
+  spec.add_runtime_dependency "rails", "~> 4"
+  spec.add_runtime_dependency "railties", "~> 4.2", ">= 4.2.0"
 
   spec.add_development_dependency "bundler", "~> 1.15"
   spec.add_development_dependency "codecov", "~> 0.1", "~> 0.1.0"

@@ -23,19 +23,12 @@ module Hekate
       end
     end
 
-    def list_parameters(environments = [])
-      get_app_env_parameters(environments)
-    end
-
-    def get_parameters(names)
-      result = []
-      names.each_slice(10) do |slice|
-        result.concat(ssm.get_parameters(
-            names: slice,
-            with_decryption: true
-        ).parameters)
+    def get_parameters(environments = [])
+      parameters = []
+      environments.each do |environment|
+        parameters += get_env_parameters(environment)
       end
-      result.flatten
+      parameters
     end
 
     def put_parameter(name, value, environment)
@@ -53,11 +46,17 @@ module Hekate
     private
 
     def kms
-      @kms ||= ::Aws::KMS::Client.new(region: @region)
+      @kms ||= ::Aws::KMS::Client.new(
+          region: @region,
+          retry_limit: 5,
+          retry_backoff: proc { |attempts| sleep(2**attempts) }
+      )
     end
 
     def ssm
-      @ssm ||= ::Aws::SSM::Client.new(region: @region)
+      @ssm ||= ::Aws::SSM::Client.new(region: @region,
+                                      retry_limit: 5,
+                                      retry_backoff: proc { |attempts| sleep(2**attempts) })
     end
 
     def kms_key(environment)
@@ -87,22 +86,19 @@ module Hekate
       aliases.include? kms_alias
     end
 
-    def get_app_env_parameters(environments = [], parameters = [], next_token = nil)
+    def get_env_parameters(environment, parameters = [], next_token = nil)
       query = {
-          filters: [
-              {
-                  key: "Name",
-                  values: environments.map { |e| "#{Hekate::Engine.application}.#{e}" }
-              }
-          ],
-          max_results: 50
+          path: "/#{Hekate::Engine.application}/#{environment}",
+          recursive: false,
+          with_decryption: true,
+          max_results: 10
       }
       query[:next_token] = next_token if next_token
-      response = ssm.describe_parameters(query)
+      response = ssm.get_parameters_by_path(query)
 
       parameters += response.parameters
 
-      parameters = get_app_env_parameters(environments, parameters, response.next_token) if response.next_token
+      parameters = get_env_parameters(environment, parameters, response.next_token) if response.next_token
 
       parameters
     end

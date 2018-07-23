@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "rails"
-require "hekate/aws"
-require "hekate/version"
-require "hekate/railtie"
-require "hekate/engine"
+require_relative "hekate/aws"
+require_relative "hekate/version"
+require_relative "hekate/railtie"
+require_relative "hekate/engine"
