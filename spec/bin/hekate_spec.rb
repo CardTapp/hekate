@@ -6,7 +6,7 @@ RSpec.describe Hekate do
   def mock_terminal
     @input = StringIO.new
     @output = StringIO.new
-    $terminal = HighLine.new @input, @output
+    HighLine.default_instance = HighLine.new @input, @output
   end
 
   before(:each) do
