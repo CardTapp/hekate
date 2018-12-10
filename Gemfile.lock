@@ -97,7 +97,7 @@ GEM
     minitest (5.11.3)
     nokogiri (1.8.5)
       mini_portile2 (~> 2.3.0)
-    public_suffix (3.0.2)
+    public_suffix (3.0.3)
     rack (1.6.11)
     rack-test (0.6.3)
       rack (>= 1.0)
@@ -159,7 +159,7 @@ GEM
     tzinfo (1.2.5)
       thread_safe (~> 0.1)
     url (0.3.2)
-    webmock (3.0.1)
+    webmock (3.4.2)
       addressable (>= 2.3.6)
       crack (>= 0.3.2)
       hashdiff
@@ -174,7 +174,7 @@ DEPENDENCIES
   rake (~> 12.3)
   rspec (~> 3.0)
   rspec_junit_formatter (~> 0.4.1)
-  webmock (~> 3.0.0, ~> 3.0)
+  webmock (~> 3.4.2, ~> 3.0)
 
 BUNDLED WITH
    1.16.1
