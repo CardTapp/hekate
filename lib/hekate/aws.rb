@@ -49,14 +49,14 @@ module Hekate
       @kms ||= ::Aws::KMS::Client.new(
           region: @region,
           retry_limit: 5,
-          retry_backoff: proc { |attempts| sleep(2**attempts) }
+          retry_backoff: ::Aws::Plugins::RetryErrors::DEFAULT_BACKOFF
       )
     end
 
     def ssm
       @ssm ||= ::Aws::SSM::Client.new(region: @region,
                                       retry_limit: 5,
-                                      retry_backoff: proc { |attempts| sleep(2**attempts) })
+                                      retry_backoff: ::Aws::Plugins::RetryErrors::DEFAULT_BACKOFF)
     end
 
     def kms_key(environment)
