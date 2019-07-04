@@ -27,7 +27,6 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "commander", "~> 4.4", ">= 4.4.0"
   spec.add_runtime_dependency "dotenv", "~> 2.2", ">= 2.2.1"
   spec.add_runtime_dependency "ec2-metadata", "~> 0.2", ">= 0.2.0"
-  spec.add_runtime_dependency "rails", "~> 4"
   spec.add_runtime_dependency "railties", "~> 4.2", ">= 4.2.0"
 
   spec.add_development_dependency "bundler", "~> 1.15"
