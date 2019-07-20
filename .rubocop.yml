@@ -273,22 +273,19 @@ Layout/MultilineOperationIndentation:
 Metrics/LineLength:
   Max: 150
 # TODO: Renable after exclusions cleaned up.
-#Metrics/BlockLength:
-#  Exclude:
-#    - spec/**/*
-#    - lib/tasks/**/*
+Metrics/BlockLength:
+  Exclude:
+    - hekate.gemspec
+    - lib/tasks/**/*
+    - spec/**/*
 Layout/CaseIndentation:
   EnforcedStyle: case
   IndentOneStep: true
-Layout/IndentArray:
+Layout/IndentFirstArrayElement:
   IndentationWidth: 4
-Layout/IndentHash:
+Layout/IndentFirstHashElement:
   IndentationWidth: 4
-Layout/FirstParameterIndentation:
+Layout/IndendFirstArgument:
   IndentationWidth: 4
-Layout/MultilineMethodCallIndentation:
-  Enabled: false
-Layout/MultilineOperationIndentation:
-  Enabled: false
 Style/FrozenStringLiteralComment:
   Enabled: true

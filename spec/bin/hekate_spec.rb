@@ -175,7 +175,7 @@ RSpec.describe Hekate do
 
     it "prompts if the file already exist" do
       allow(Hekate::Engine).to receive(:ec2?).and_return(false)
-      allow(File).to receive(:exist?).and_return(:true)
+      allow(File).to receive(:exist?).and_return(true)
       expect_any_instance_of(HighLine).to receive(:agree).and_return(false)
       command = Commander::Runner.instance.commands["export"]
       command.run "--application", "test", "--file", "/tmp/somefile"

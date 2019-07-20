@@ -12,15 +12,13 @@ module Hekate
 
     def get_parameter(name)
       parameters = ssm.get_parameters(
-          names: [name],
-          with_decryption: true
+        names: [name],
+        with_decryption: true
       ).parameters
 
-      if parameters.to_a.empty?
-        fail "Could not find parameter #{name}"
-      else
-        parameters.first["value"]
-      end
+      fail "Could not find parameter #{name}" if parameters.to_a.empty?
+
+      parameters.first["value"]
     end
 
     def get_parameters(environments = [])
@@ -47,9 +45,9 @@ module Hekate
 
     def kms
       @kms ||= ::Aws::KMS::Client.new(
-          region: @region,
-          retry_limit: 5,
-          retry_backoff: ::Aws::Plugins::RetryErrors::DEFAULT_BACKOFF
+        region: @region,
+        retry_limit: 5,
+        retry_backoff: ::Aws::Plugins::RetryErrors::DEFAULT_BACKOFF
       )
     end
 
@@ -67,11 +65,7 @@ module Hekate
       if kms_alias_exists? alias_name
         key = kms.describe_key(key_id: alias_name).key_metadata
       else
-        key = kms.create_key.key_metadata
-        kms.create_alias(
-            alias_name: alias_name,
-            target_key_id: key.key_id
-        )
+        create_key(alias_name)
       end
       if key
         @keys[environment] = key
@@ -101,6 +95,14 @@ module Hekate
       parameters = get_env_parameters(environment, parameters, response.next_token) if response.next_token
 
       parameters
+    end
+
+    def create_key(alias_name)
+      key = kms.create_key.key_metadata
+      kms.create_alias(
+        alias_name: alias_name,
+        target_key_id: key.key_id
+      )
     end
   end
 end

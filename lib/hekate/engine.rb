@@ -6,6 +6,7 @@ require "ec2_metadata"
 require "open-uri"
 
 module Hekate
+  # rubocop:disable Metrics/ClassLength
   class Engine
     class << self
       attr_accessor :application
@@ -32,9 +33,9 @@ module Hekate
 
         timeout = ENV.fetch("HEKATE_SSM_TIMEOUT") { 0.5 }
         can_connect?(
-            "ssm.us-east-1.amazonaws.com",
-            443,
-            timeout
+          "ssm.us-east-1.amazonaws.com",
+          443,
+          timeout
         )
       end
 
@@ -42,20 +43,36 @@ module Hekate
         @root ||= Rails::Engine.find_root_with_flag("config.ru", File.dirname($PROGRAM_NAME))
       end
 
-      def dotenv_files
-        files = [
-            root.join(".env.#{Rails.env}.local"),
-            (root.join(".env.local") unless Rails.env.test?),
-            root.join(".env.#{Rails.env}"),
-            root.join(".env")
-        ].compact.select { |file| File.exist? file }
+      def env_rails_local
+        root.join ".env.#{Rails.env}.local"
+      end
 
-        raise "Could not find .env files while falling back to dotenv" if files.empty?
-        files
+      def env_local
+        root.join ".env.local"
+      end
+
+      def env_rails
+        root.join ".env.#{Rails.env}"
+      end
+
+      def env
+        root.join ".env"
+      end
+
+      def dotenv_files
+        files = [env_rails_local, env_local, env_rails, env]
+        files << env_local unless Rails.env.test?
+        result = files.compact&.select { |file| File.exist? file }
+
+        raise "Could not find .env files while falling back to dotenv" if result.empty?
+
+        result
       end
 
       private
 
+      # rubocop:disable Metrics/MethodLength
+      # rubocop:disable Metrics/AbcSize
       def can_connect?(host, port, timeout = 2)
         # Convert the passed host into structures the non-blocking calls
         # can deal with
@@ -68,7 +85,7 @@ module Hekate
 
           begin
             # Initiate the socket connection in the background. If it doesn't fail
-            # immediatelyit will raise an IO::WaitWritable (Errno::EINPROGRESS)
+            # immediately it will raise an IO::WaitWritable (Errno::EINPROGRESS)
             # indicating the connection is in progress.
             socket.connect_nonblock(sockaddr)
           rescue IO::WaitWritable
@@ -100,6 +117,8 @@ module Hekate
 
         result
       end
+      # rubocop:enable Metrics/AbcSize
+      # rubocop:enable Metrics/MethodLength
     end
 
     def initialize(region, environment, application = nil)
@@ -114,19 +133,9 @@ module Hekate
 
     def load_environment
       if Hekate::Engine.online?
-        application = Hekate::Engine.application
-        environments = ["root", @environment].compact
-
-        parameters = awsclient.get_parameters(environments)
-
-        environments.each do |env|
-          parameters.select { |r| r.name.start_with?("/#{application}/#{env}/") }.each do |parameter|
-            parameter_name = parameter.name.gsub("/#{application}/#{env}/", "")
-            ENV[parameter_name] = parameter.value
-          end
-        end
+        load_online
       elsif Rails.env.development? || Rails.env.test?
-        Dotenv.load(*Hekate::Engine.dotenv_files)
+        load_offline
       else
         raise "Could not connect to parameter store"
       end
@@ -140,15 +149,7 @@ module Hekate
       progress = Commander::UI::ProgressBar.new(lines.length)
       lines.each do |line|
         progress.increment
-        next if line.start_with? "#"
-
-        key, value = line.split("=")
-        next if value.nil?
-
-        value = value.delete('"').delete("'").delete("\n")
-        next if value.empty?
-
-        put(key, value)
+        process_line(line)
       end
     end
 
@@ -180,7 +181,7 @@ module Hekate
       parameters = awsclient.get_parameters([@environment])
 
       progress = Commander::UI::ProgressBar.new(parameters.length)
-      open(env_file, "w") do |file|
+      File.open(env_file, "w") do |file|
         parameters.each do |parameter|
           progress.increment
           parameter_name = parameter.name.gsub("/#{Hekate::Engine.application}/#{@environment}/", "")
@@ -188,5 +189,35 @@ module Hekate
         end
       end
     end
+
+    private
+
+    def process_line(line)
+      key, value = line.split("=")
+      value = value.delete('"').delete("'").delete("\n")
+
+      return if line.start_with?("#") || value.nil? || value.empty?
+
+      put(key, value)
+    end
+
+    def load_online
+      application = Hekate::Engine.application
+      environments = ["root", @environment].compact
+
+      parameters = awsclient.get_parameters(environments)
+
+      environments.each do |env|
+        parameters.select { |r| r.name.start_with?("/#{application}/#{env}/") }.each do |parameter|
+          parameter_name = parameter.name.gsub("/#{application}/#{env}/", "")
+          ENV[parameter_name] = parameter.value
+        end
+      end
+    end
+
+    def load_offline
+      Dotenv.load(*Hekate::Engine.dotenv_files)
+    end
   end
+  # rubocop:enable Metrics/ClassLength
 end

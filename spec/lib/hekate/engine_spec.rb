@@ -64,11 +64,11 @@ RSpec.describe Hekate::Engine do
 
       it "loads environment parameters" do
         expect(aws_wrapper).to receive(:get_parameters).
-          with(%w[root development]).
-          and_return([
-                         double(name: "/myapp/development/ONE", value: "valueone"),
-                         double(name: "/myapp/development/TWO", value: "valuetwo")
-                     ])
+                                   with(%w[root development]).
+                                   and_return([
+                                                  double(name: "/myapp/development/ONE", value: "valueone"),
+                                                  double(name: "/myapp/development/TWO", value: "valuetwo")
+                                              ])
         engine = Hekate::Engine.new(region, "development", "myapp")
         expect(ENV).to receive(:[]=).with("ONE", "valueone")
         expect(ENV).to receive(:[]=).with("TWO", "valuetwo")
@@ -77,12 +77,12 @@ RSpec.describe Hekate::Engine do
 
       it "requests root and environment specific keys" do
         expect(aws_wrapper).to receive(:get_parameters).
-          with(%w[root development]).
-          and_return([
-                         double(name: "/myapp/root/THREE", value: "valuethree"),
-                         double(name: "/myapp/development/ONE", value: "valueone"),
-                         double(name: "/myapp/development/TWO", value: "valuetwo")
-                     ])
+                                   with(%w[root development]).
+                                   and_return([
+                                                  double(name: "/myapp/root/THREE", value: "valuethree"),
+                                                  double(name: "/myapp/development/ONE", value: "valueone"),
+                                                  double(name: "/myapp/development/TWO", value: "valuetwo")
+                                              ])
 
         engine = Hekate::Engine.new(region, "development", "myapp")
         expect(ENV).to receive(:[]=).with("ONE", "valueone")
@@ -93,12 +93,12 @@ RSpec.describe Hekate::Engine do
 
       it "overwrites root keys" do
         expect(aws_wrapper).to receive(:get_parameters).
-                                                   with(%w[root development]).
-                                                   and_return([
-                                                                  double(name: "/myapp/development/ONE", value: "valueone"),
-                                                                  double(name: "/myapp/root/ONE", value: "ROOT"),
-                                                                  double(name: "/myapp/development/TWO", value: "valuetwo")
-                                                              ])
+                                   with(%w[root development]).
+                                   and_return([
+                                                  double(name: "/myapp/development/ONE", value: "valueone"),
+                                                  double(name: "/myapp/root/ONE", value: "ROOT"),
+                                                  double(name: "/myapp/development/TWO", value: "valuetwo")
+                                              ])
         engine = Hekate::Engine.new(region, "development", "myapp")
         expect(ENV).to receive(:[]=).with("ONE", "ROOT")
         expect(ENV).to receive(:[]=).with("ONE", "valueone")
@@ -202,12 +202,12 @@ RSpec.describe Hekate::Engine do
   describe "delete all" do
     it "deletes all keys" do
       expect(aws_wrapper).to receive(:get_parameters).
-        with(["development"]).
-        and_return([double(name: "/myapp/development/ONE"), double(name: "/myapp/development/TWO")])
+                                 with(["development"]).
+                                 and_return([double(name: "/myapp/development/ONE"), double(name: "/myapp/development/TWO")])
       expect(aws_wrapper).to receive(:delete_parameter).
-        with("/myapp/development/ONE")
+                                 with("/myapp/development/ONE")
       expect(aws_wrapper).to receive(:delete_parameter).
-        with("/myapp/development/TWO")
+                                 with("/myapp/development/TWO")
       engine = Hekate::Engine.new(region, "development", "mortgagemapp")
 
       engine.delete_all
@@ -217,11 +217,11 @@ RSpec.describe Hekate::Engine do
   describe "export" do
     it "exports to a .env formatted file" do
       expect(aws_wrapper).to receive(:get_parameters).
-        with(["development"]).
-        and_return([
-                       double(name: "/myapp/development/ONE", value: "valueone"),
-                       double(name: "/myapp/development/TWO", value: "valuetwo")
-                   ])
+                                 with(["development"]).
+                                 and_return([
+                                                double(name: "/myapp/development/ONE", value: "valueone"),
+                                                double(name: "/myapp/development/TWO", value: "valuetwo")
+                                            ])
       expect_any_instance_of(File).to receive(:puts).with("ONE=valueone")
       expect_any_instance_of(File).to receive(:puts).with("TWO=valuetwo")
       engine = Hekate::Engine.new(region, "development", "myapp")
