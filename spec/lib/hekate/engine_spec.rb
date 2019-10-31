@@ -22,6 +22,7 @@ RSpec.describe Hekate::Engine do
 
     it "returns the AWS_REGION variable if set" do
       allow(Hekate::Engine).to receive(:ec2?).and_return(false)
+      allow(ENV).to receive(:[]).with("RAILS_ENV").and_return("us-east-1")
       allow(ENV).to receive(:[]).with("AWS_REGION").and_return("SOMEREGION")
       expect(Hekate::Engine.get_region).to eq "SOMEREGION"
     end

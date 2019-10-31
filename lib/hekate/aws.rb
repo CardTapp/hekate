@@ -48,6 +48,7 @@ module Hekate
     def kms
       @kms ||= ::Aws::KMS::Client.new(
           region: @region,
+          stub_responses: false,
           retry_limit: 5,
           retry_backoff: ::Aws::Plugins::RetryErrors::DEFAULT_BACKOFF
       )
@@ -55,6 +56,7 @@ module Hekate
 
     def ssm
       @ssm ||= ::Aws::SSM::Client.new(region: @region,
+                                      stub_responses: false,
                                       retry_limit: 5,
                                       retry_backoff: ::Aws::Plugins::RetryErrors::DEFAULT_BACKOFF)
     end
