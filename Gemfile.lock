@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    hekate (0.2.0.pre3)
+    hekate (0.2.0.pre4)
       aws-sdk-core
       aws-sdk-kms
       aws-sdk-ssm
@@ -34,8 +34,8 @@ GEM
       zeitwerk (~> 2.2)
     addressable (2.7.0)
       public_suffix (>= 2.0.2, < 5.0)
-aws-eventstream (1.1.0)
-    aws-partitions (1.304.0)
+    aws-eventstream (1.1.0)
+    aws-partitions (1.306.0)
     aws-sdk-core (3.94.0)
       aws-eventstream (~> 1, >= 1.0.2)
       aws-partitions (~> 1, >= 1.239.0)
@@ -44,7 +44,7 @@ aws-eventstream (1.1.0)
     aws-sdk-kms (1.30.0)
       aws-sdk-core (~> 3, >= 3.71.0)
       aws-sigv4 (~> 1.1)
-    aws-sdk-ssm (1.73.0)
+    aws-sdk-ssm (1.74.0)
       aws-sdk-core (~> 3, >= 3.71.0)
       aws-sigv4 (~> 1.1)
     aws-sigv4 (1.1.3)
