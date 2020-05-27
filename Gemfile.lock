@@ -130,13 +130,9 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  bundler
   codecov
   hekate!
   rake
   rspec
   rspec_junit_formatter
   webmock
-
-BUNDLED WITH
-   2.1.4
