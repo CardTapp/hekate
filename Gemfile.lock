@@ -50,10 +50,11 @@ GEM
     aws-sigv4 (1.2.1)
       aws-eventstream (~> 1, >= 1.0.2)
     builder (3.2.4)
-    codecov (0.1.17)
+    codecov (0.2.2)
+      colorize
       json
       simplecov
-      url
+    colorize (0.8.1)
     commander (4.5.2)
       highline (~> 2.0.0)
     concurrent-ruby (1.1.6)
@@ -119,7 +120,6 @@ GEM
     thread_safe (0.3.6)
     tzinfo (1.2.7)
       thread_safe (~> 0.1)
-    url (0.3.2)
     webmock (3.8.3)
       addressable (>= 2.3.6)
       crack (>= 0.3.2)
