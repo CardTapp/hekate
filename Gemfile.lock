@@ -50,7 +50,7 @@ GEM
     aws-sigv4 (1.2.1)
       aws-eventstream (~> 1, >= 1.0.2)
     builder (3.2.4)
-    codecov (0.2.2)
+    codecov (0.2.5)
       colorize
       json
       simplecov
