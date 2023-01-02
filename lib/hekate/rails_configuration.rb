@@ -14,10 +14,6 @@ module Hekate
       ["root", Rails.env.to_s]
     end
 
-    def key_path(environment)
-      "/#{application}/#{environment}/"
-    end
-
     private
 
     def potential_env_files
@@ -28,7 +24,5 @@ module Hekate
           Rails.root.join(".env")
       ]
     end
-
-    memoize :dotenv_files, :environments, :key_path
   end
 end

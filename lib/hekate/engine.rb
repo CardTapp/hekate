@@ -3,7 +3,6 @@
 module Hekate
   class Engine
     extend Memoist
-    include Hekate::Dsl
 
     def load_environment
       raise "invalid hekate configuration" unless config.valid?
@@ -36,11 +35,18 @@ module Hekate
     end
 
     def load_from_ssm
-      config.ssm_client.get_all.each do |parameter|
-        ENV[parameter.unpathed_name] = parameter.value
+      ssm_client.get_all.each do |parameter|
+        set_env(parameter.unpathed_name, parameter.value)
       end
     end
 
-    memoize :config
+    def set_env(name, value)
+      ENV[name] = value
+    end
+
+    def ssm_client
+      config.ssm_client
+    end
+    memoize :config, :ssm_client
   end
 end

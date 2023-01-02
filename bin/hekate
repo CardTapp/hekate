@@ -21,7 +21,7 @@ end
 
 # :name is optional, otherwise uses the basename of this executable
 program :name, "Hekate"
-program :version, Hekate::Version
+program :version, "0.2.0.pre4"
 program :description, "Gem for encrypting and storing rails application secrets as Amazon SSM parameters"
 
 command :import do |c|

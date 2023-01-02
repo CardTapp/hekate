@@ -14,10 +14,14 @@ module Hekate
     end
 
     def unpathed_name
-      name.gsub(config.key_path(environment), "")
+      name.gsub(key_path(environment), "")
     end
 
     private
+
+    def key_path(environment)
+      "/#{config.application}/#{environment}/"
+    end
 
     def config
       Hekate.config

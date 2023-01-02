@@ -23,7 +23,5 @@ module Hekate
     def environments
       [environment]
     end
-
-    memoize :environment, :environments, :key_path
   end
 end

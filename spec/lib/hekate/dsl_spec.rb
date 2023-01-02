@@ -12,10 +12,9 @@ RSpec.describe Hekate::Dsl do
                                                                                  "ONE=valueone",
                                                                                  "TWO=valuetwo"
                                                                              ])
-      engine = Hekate::Engine.new
-      expect(engine).to receive(:put).with("ONE", "valueone")
-      expect(engine).to receive(:put).with("TWO", "valuetwo")
-      engine.import("/tmp/import.csv")
+      expect(ssm_client).to receive(:put).with("/myapp/test/ONE", "valueone")
+      expect(ssm_client).to receive(:put).with("/myapp/test/TWO", "valuetwo")
+      import("/tmp/import.csv")
     end
   end
 

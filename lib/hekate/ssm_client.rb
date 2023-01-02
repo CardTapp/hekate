@@ -24,7 +24,7 @@ module Hekate
     def get_all
       config.environments.lazy.map do |environment|
         Enumerator.new do |yielder|
-          ssm_client.get_parameters_by_path(get_all_query).response.each_page do |page|
+          ssm_client.get_parameters_by_path(get_all_query(environment)).each_page do |page|
             page.parameters.each do |parameter|
               yielder.yield Hekate::Parameter.new(parameter.name, parameter.value, environment)
             end
@@ -56,7 +56,11 @@ module Hekate
 
     private
 
-    def get_all_query
+    def config
+      Hekate.config
+    end
+
+    def get_all_query(environment)
       {
           path: "/#{config.application}/#{environment}",
           recursive: false,

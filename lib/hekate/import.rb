@@ -2,7 +2,6 @@
 
 module Hekate
   class Import
-    include Hekate::Dsl
     extend Memoist
 
     def initialize(file)
@@ -17,18 +16,28 @@ module Hekate
         next if line.start_with? "#"
 
         key, value = line.split("=")
-        next if value.nil?
+        clean(key)
+        clean(value)
 
-        value = value.delete('"').delete("'").delete("\n")
         next if value.empty?
 
-        put(key, value)
+        ssm_client.put("#{config.key_path}#{key}", value)
       end
     end
 
     private
 
     attr_reader :file
+
+    def clean(value)
+      value.gsub!(/("|')/, "")
+      value.strip!
+      value
+    end
+
+    def config
+      Hekate.config
+    end
 
     def progress
       Commander::UI::ProgressBar.new(lines.length)
@@ -38,6 +47,10 @@ module Hekate
       File.readlines(file)
     end
 
-    memoize :lines, :progress
+    def ssm_client
+      config.ssm_client
+    end
+
+    memoize :config, :lines, :progress, :ssm_client
   end
 end

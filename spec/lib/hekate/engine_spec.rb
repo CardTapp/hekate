@@ -3,13 +3,13 @@
 require "spec_helper"
 
 RSpec.describe Hekate::Engine do
-  include Hekate::Dsl
   let(:engine) { described_class.new }
   let(:config) do
     config = Hekate::RailsConfiguration.new
     config.application = "myapp"
     config
   end
+  let(:ssm_client) { config.ssm_client }
   let(:root_path) { File.join(File.dirname(__FILE__), "../../tmp") }
   let(:root) { Pathname.new(root_path) }
 
@@ -30,8 +30,8 @@ RSpec.describe Hekate::Engine do
                                                  Hekate::Parameter.new("/myapp/development/ONE", "valueone", "development"),
                                                  Hekate::Parameter.new("/myapp/development/TWO", "valuetwo", "development")
                                              ])
-        expect(ENV).to receive(:[]=).with("ONE", "valueone")
-        expect(ENV).to receive(:[]=).with("TWO", "valuetwo")
+        expect(engine).to receive(:set_env).with("ONE", "valueone").and_return(nil)
+        expect(engine).to receive(:set_env).with("TWO", "valuetwo").and_return(nil)
         engine.load_environment
       end
 
@@ -42,9 +42,9 @@ RSpec.describe Hekate::Engine do
                                                  Hekate::Parameter.new("/myapp/development/ONE", "valueone", "development"),
                                                  Hekate::Parameter.new("/myapp/development/TWO", "valuetwo", "development")
                                              ])
-        expect(ENV).to receive(:[]=).with("ONE", "ROOT")
-        expect(ENV).to receive(:[]=).with("ONE", "valueone")
-        expect(ENV).to receive(:[]=).with("TWO", "valuetwo")
+        expect(engine).to receive(:set_env).with("ONE", "ROOT").and_return(nil)
+        expect(engine).to receive(:set_env).with("ONE", "valueone").and_return(nil)
+        expect(engine).to receive(:set_env).with("TWO", "valuetwo").and_return(nil)
         engine.load_environment
       end
 
