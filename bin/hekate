@@ -1,72 +1,62 @@
 #!/usr/bin/env ruby
 
-require_relative '../lib/hekate'
-require 'rubygems'
-require 'commander/import'
+require_relative "../lib/hekate"
 
-# :name is optional, otherwise uses the basename of this executable
-program :name, 'Hekate'
-program :version, Hekate::VERSION
-program :description, 'Gem for encrypting and storing rails application secrets as Amazon SSM parameters'
+require "rubygems"
+require "commander/import"
 
-class CommandProcessor
-  def self.add_default_options(config)
-    config.option '--application STRING', String, 'The application name for which the imported secrets will be used'
-    config.option '--environment STRING', String, 'The rails environment for which the imported secrets will be used. Defaults to development'
-    config.option '--region STRING', String, 'The aws region to import into. Defaults to ENV["AWS_REGION"] || "us-west-2"'
-  end
+include Hekate::Dsl
 
-  def self.add_default_values(options)
-    region = Hekate::Engine.get_region
-    options.default \
-      environment: 'development',
-      region: region
-  end
+def add_default_options(config)
+  config.option "--application STRING", String, "The application name for which the imported secrets will be used"
+  config.option "--environment STRING", String, "The rails environment for which the imported secrets will be used"
+end
 
-  def self.valid?(options)
-    say("<%= color('--application is required', RED) %>!") if options.application.blank?
-    say("<%= color('--environment is required', RED) %>!") if options.environment.blank?
-
-    !options.application.blank? && !options.environment.blank? && yield
+def configure(options)
+  Hekate.configure do |config|
+    config.application = options.application
+    config.environment = options.environment
   end
 end
 
-command :import do |c|
-  c.syntax = 'hekate import --region us-west-2 --environment development --application mycoolapp --file .env'
-  c.description = 'imports a .env formatted file into Amazon SSM'
-  CommandProcessor.add_default_options c
-  c.option '--file STRING', String, 'The dotenv formatted file to import'
-  c.action do |_args, options|
-    CommandProcessor.add_default_values options
+# :name is optional, otherwise uses the basename of this executable
+program :name, "Hekate"
+program :version, Hekate::Version
+program :description, "Gem for encrypting and storing rails application secrets as Amazon SSM parameters"
 
-    next unless CommandProcessor.valid?(options) do
+command :import do |c|
+  c.syntax = "hekate import --environment development --application mycoolapp --file .env"
+  c.description = "imports a .env formatted file into Amazon SSM"
+  add_default_options c
+  c.option "--file STRING", String, "The dotenv formatted file to import"
+  c.action do |_args, options|
+    configure(options)
+    next unless Hekate.config.valid? do
       if options.file.blank? || !File.exist?(options.file)
         say("<%= color('--file was not provided or does not exist', RED) %>!")
         next(false)
       end
 
-      unless agree("<%= color('WARNING!!! This will overwrite existing parameters for #{options.application} #{options.environment} in #{options.region}. Continue?', RED) %>")
+      unless agree("<%= color('WARNING!!! This will overwrite existing parameters for #{options.application} #{options.environment} in #{Hekate.config.region}. Continue?', RED) %>")
         say("<%= color('ABORTED', RED) %>!")
         next(false)
       end
       next(true)
     end
 
-    engine = Hekate::Engine.new(options.region, options.environment, options.application)
-    engine.import options.file
+    import options.file
   end
 end
 
 command :put do |c|
-  c.syntax = 'hekate put --region us-west-2 --environment development --application mycoolapp --key somekey --value somevalue'
-  c.description = 'adds a new environment secret and value'
-  CommandProcessor.add_default_options c
-  c.option '--key STRING', String, 'The environment name of the secret to store'
-  c.option '--value STRING', String, 'The environment value of the secret to store'
+  c.syntax = "hekate put --environment development --application mycoolapp --key somekey --value somevalue"
+  c.description = "adds a new environment secret and value"
+  add_default_options c
+  c.option "--key STRING", String, "The name of the secret to store"
+  c.option "--value STRING", String, "The value to store in the secret"
   c.action do |_args, options|
-    CommandProcessor.add_default_values options
-
-    next unless CommandProcessor.valid?(options) do
+    configure(options)
+    next unless Hekate.config.valid? do
       if options.key.blank? || options.value.blank?
         say("<%= color('--key and --value are required', RED) %>!")
         next(false)
@@ -74,20 +64,18 @@ command :put do |c|
       next(true)
     end
 
-    engine = Hekate::Engine.new(options.region, options.environment, options.application)
-    engine.put options.key, options.value
+    put options.key, options.value
   end
 end
 
 command :delete do |c|
-  c.syntax = 'hekate delete --region us-west-2 --environment development --application mycoolapp --key somekey'
-  c.description = 'deletes an environment secret'
-  CommandProcessor.add_default_options c
-  c.option '--key STRING', String, 'The name of the secret to delete'
+  c.syntax = "hekate delete --environment development --application mycoolapp --key somekey"
+  c.description = "deletes an environment secret"
+  add_default_options c
+  c.option "--key STRING", String, "The name of the secret to delete"
   c.action do |_args, options|
-    CommandProcessor.add_default_values options
-
-    next unless CommandProcessor.valid?(options) do
+    configure(options)
+    next unless Hekate.config.valid? do
       if options.key.blank?
         say("<%= color('--key is required', RED) %>!")
         next(false)
@@ -95,19 +83,17 @@ command :delete do |c|
       next(true)
     end
 
-    engine = Hekate::Engine.new(options.region, options.environment, options.application)
-    engine.delete options.key
+    delete options.key
   end
 end
 
 command :delete_all do |c|
-  c.syntax = 'hekate delete_all --region us-west-2 --environment development --application mycoolapp'
-  c.description = 'deletes all secrets for the give environment'
-  CommandProcessor.add_default_options c
+  c.syntax = "hekate delete_all --environment development --application mycoolapp"
+  c.description = "deletes all secrets for the give environment"
+  add_default_options c
   c.action do |_args, options|
-    CommandProcessor.add_default_values options
-
-    next unless CommandProcessor.valid?(options) do
+    configure(options)
+    next unless Hekate.config.valid? do
       unless agree("<%= color('WARNING!!! This will delete all existing parameters for #{options.application} #{options.environment} in #{options.region}. Continue?', RED) %>")
         say("<%= color('ABORTED', RED) %>!")
         next(false)
@@ -115,20 +101,23 @@ command :delete_all do |c|
       next(true)
     end
 
-    engine = Hekate::Engine.new(options.region, options.environment, options.application)
-    engine.delete_all
+    parameters = get_all
+    progress = Commander::UI::ProgressBar.new(parameters.length)
+    parameters.each do |parameter|
+      progress.increment
+      ssm_client.delete(parameter)
+    end
   end
 end
 
 command :get do |c|
-  c.syntax = 'hekate get --region us-west-2 --environment development --application mycoolapp --key somekey'
-  c.description = 'retrieves an unencrypted environment secret'
-  CommandProcessor.add_default_options c
-  c.option '--key STRING', String, 'The environment name of the secret to delete'
+  c.syntax = "hekate get --environment development --application mycoolapp --key somekey"
+  c.description = "retrieves an unencrypted environment secret"
+  add_default_options c
+  c.option "--key STRING", String, "The name of the secret to delete"
   c.action do |_args, options|
-    CommandProcessor.add_default_values options
-
-    next unless CommandProcessor.valid?(options) do
+    configure(options)
+    next unless Hekate.config.valid? do
       if options.key.blank?
         say("<%= color('--key is required', RED) %>!")
         next(false)
@@ -136,33 +125,29 @@ command :get do |c|
       next(true)
     end
 
-    engine = Hekate::Engine.new(options.region, options.environment, options.application)
-    puts engine.get(options.key)
+    get(options.key)
   end
 end
 
 command :export do |c|
-  c.syntax = 'hekate export --region us-west-2 --environment development --application mycoolapp --file .env'
-  c.description = 'exports Amazon SSM parameters to a .env formatted file'
-  CommandProcessor.add_default_options c
-  c.option '--file STRING', String, 'The dotenv formatted file to export to'
+  c.syntax = "hekate export --region us-west-2 --environment development --application mycoolapp --file .env"
+  c.description = "exports Amazon SSM parameters to a .env formatted file"
+  add_default_options c
+  c.option "--file STRING", String, "The dotenv formatted file to export to"
   c.action do |_args, options|
-    CommandProcessor.add_default_values options
-
-    next unless CommandProcessor.valid?(options) do
+    configure(options)
+    next unless Hekate.config.valid? do
       if options.file.blank?
         say("<%= color('--file is required', RED) %>!")
         next(false)
       end
-      if File.exist? options.file
-        unless agree("<%= color('File already exists. Overwrite?', RED) %>!")
-          say("<%= color('ABORTED', RED) %>!")
-          next(false)
-        end
+      if File.exist?(options.file) && !agree("<%= color('File already exists. Overwrite?', RED) %>!")
+        say("<%= color('ABORTED', RED) %>!")
+        next(false)
       end
       next true
     end
-    engine = Hekate::Engine.new(options.region, options.environment, options.application)
-    engine.export options.file
+
+    export options.file
   end
 end

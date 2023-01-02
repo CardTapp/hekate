@@ -5,6 +5,8 @@ require "hekate"
 require "commander"
 require "webmock/rspec"
 
+Rails.env = "test"
+
 if ENV["CI"] == "true"
   require "simplecov"
   SimpleCov.filters.clear
@@ -26,10 +28,11 @@ RSpec.configure do |config|
   config.expect_with :rspec do |c|
     c.syntax = :expect
   end
+end
 
-  config.after(:suite) do
-    # ensure commander doesn't attempt to run any left over commands from testing
-    runner = Commander::Runner.instance
-    def runner.run_active_command; end
-  end
+# Load spec support files
+Dir[Pathname.new(__FILE__).join("..", "support", "**", "*.rb")].sort.each do |support_file|
+  next if File.directory? support_file
+
+  require support_file
 end
