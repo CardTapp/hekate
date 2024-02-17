@@ -49,13 +49,15 @@ GEM
       aws-sigv4 (~> 1.1)
     aws-sigv4 (1.8.0)
       aws-eventstream (~> 1, >= 1.0.2)
+    bigdecimal (3.1.6)
     builder (3.2.4)
     codecov (0.6.0)
       simplecov (>= 0.15, < 0.22)
     commander (4.6.0)
       highline (~> 2.0.0)
     concurrent-ruby (1.1.7)
-    crack (0.4.5)
+    crack (1.0.0)
+      bigdecimal
       rexml
     crass (1.0.6)
     diff-lcs (1.5.0)
